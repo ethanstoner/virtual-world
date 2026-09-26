@@ -6,7 +6,11 @@ import { closedCatmullRom } from "./spline";
 export const ARENA: readonly [number, number] = [1200, 800];
 export const TRACK_WIDTH = 90;
 
-/** Below this radius no speed gets a car round (NeuroRacer tools/probe_tracks.py). */
+/**
+ * NeuroRacer's minimum centerline radius. Below it, the centerline stops describing the
+ * corner a car drives (champions lap 12px centerline corners on a wider line, NeuroRacer
+ * devlog 15), so a track's corner metric would mean nothing.
+ */
 export const MIN_RADIUS = 40;
 
 export type TrackFile = {
@@ -107,7 +111,7 @@ export class Track {
       },
       {
         id: "radius",
-        label: "Driveable corners",
+        label: "Measurable corners",
         ok: m.tightest_radius >= MIN_RADIUS,
         severity: "error",
         detail: `tightest ${fmt(m.tightest_radius)}px, needs >= ${MIN_RADIUS}px`,

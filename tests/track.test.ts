@@ -62,7 +62,7 @@ describe("Track", () => {
     expect(checks.filter((c) => c.severity === "error" && !c.ok)).toEqual([]);
   });
 
-  it("flags a pinched loop as overlapping and a tiny kink as undriveable", () => {
+  it("flags a pinched loop as overlapping and a tiny kink as too tight to measure", () => {
     const pinched = new Track("p", [[200, 300], [1000, 300], [1000, 360], [600, 340], [200, 360]].map(([x, y]) => new Point(x, y)));
     const a = pinched.analyse();
     const byId = Object.fromEntries(Track.checks(a).map((c) => [c.id, c.ok]));

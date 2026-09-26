@@ -36,7 +36,7 @@ while any of the first three fails:
 | --- | --- | --- |
 | No overlap | parts of the lap more than 1.5 widths apart stay more than 1 width apart | progress is one value per pixel, so overlapping road has ambiguous progress |
 | Inside arena | road edge inside the 1200×800 world | the masks are the world |
-| Driveable corners | tightest radius ≥ 40px | below that no speed gets the car round |
+| Measurable corners | tightest radius ≥ 40px | below that the centerline radius stops describing the corner a car drives: NeuroRacer's champions lap 12px centerline corners on a wider line |
 | Turns both ways (warning) | some of the lap curves against the grain | an all-one-way loop can be driven by a fixed steering bias |
 
 ![A pinched track failing two checks](docs/editor-failing.png)
