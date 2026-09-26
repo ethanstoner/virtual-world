@@ -36,7 +36,7 @@ canvas#view {
   position: fixed;
   top: 12px;
   left: 12px;
-  right: 12px;
+  right: 304px;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -56,12 +56,7 @@ canvas#view {
   backdrop-filter: blur(6px);
 }
 
-.group.right {
-  margin-left: auto;
-}
-
-button,
-.btn {
+button {
   appearance: none;
   border: 0;
   background: transparent;
@@ -78,8 +73,7 @@ button,
   gap: 6px;
 }
 
-button:hover,
-.btn:hover {
+button:hover {
   background: #232835;
 }
 
@@ -87,47 +81,6 @@ button:disabled {
   opacity: 0.35;
   cursor: default;
   background: transparent;
-}
-
-button.active {
-  background: var(--accent);
-  color: #1a1a1a;
-}
-
-button kbd {
-  font: 11px/1 ui-monospace, monospace;
-  color: var(--muted);
-}
-
-button.active kbd {
-  color: #5a4a10;
-}
-
-.btn.primary {
-  background: var(--accent);
-  color: #1a1a1a;
-}
-
-.status {
-  position: fixed;
-  left: 12px;
-  bottom: 12px;
-  max-width: calc(100vw - 24px);
-  padding: 8px 12px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  font-size: 12px;
-  color: var(--muted);
-  z-index: 2;
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.status b {
-  color: var(--text);
-  font-weight: 600;
 }
 
 .toast {
@@ -149,84 +102,139 @@ button.active kbd {
   color: var(--danger);
 }
 
-dialog {
-  background: #161a22;
-  color: var(--text);
+.side {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  width: 280px;
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  padding: 14px 16px;
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 20px;
-  width: min(560px, calc(100vw - 32px));
-}
-
-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.55);
-}
-
-dialog h2 {
-  margin: 0 0 6px;
-  font-size: 17px;
-}
-
-dialog p {
-  margin: 0 0 12px;
+  z-index: 2;
   font-size: 13px;
-  color: var(--muted);
-  line-height: 1.5;
 }
 
-dialog textarea,
-dialog input {
-  width: 100%;
+.side h3 {
+  margin: 16px 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.side .name {
+  display: grid;
+  gap: 6px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.side input {
   background: #0d1016;
   color: var(--text);
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 8px;
-  font: 12px ui-monospace, monospace;
+  font: 14px inherit;
+  font-family: inherit;
 }
 
-dialog textarea {
-  height: 140px;
-  resize: vertical;
-}
-
-dialog .row {
-  display: flex;
+.side ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
   gap: 8px;
-  align-items: center;
-  margin-top: 12px;
-  flex-wrap: wrap;
 }
 
-dialog .row.end {
-  justify-content: flex-end;
+.side li {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 2px 8px;
 }
 
-dialog label {
+.side li .mark {
+  font-weight: 700;
+}
+
+.side li.ok .mark {
+  color: #4ade80;
+}
+
+.side li.error .mark {
+  color: var(--danger);
+}
+
+.side li.warning .mark {
+  color: var(--accent);
+}
+
+.side li small {
+  grid-column: 2;
+  color: var(--muted);
   font-size: 12px;
+}
+
+.side dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 12px;
+  margin: 0;
+}
+
+.side dt {
   color: var(--muted);
 }
 
-.panel {
-  position: fixed;
-  right: 12px;
-  bottom: 12px;
-  background: var(--panel);
+.side dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.side .note {
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  border: 1px solid #5a4a10;
+  border-radius: 8px;
+  background: rgba(255, 207, 74, 0.08);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--accent);
+}
+
+.side .note[hidden] {
+  display: none;
+}
+
+.side .hint {
+  margin: 16px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+kbd {
+  font: 11px ui-monospace, monospace;
+  padding: 1px 5px;
   border: 1px solid var(--line);
-  border-radius: 10px;
-  z-index: 2;
-  overflow: hidden;
+  border-radius: 4px;
 }
 
-.panel canvas {
-  display: block;
-}
-
-@media (max-width: 640px) {
-  button kbd {
-    display: none;
+@media (max-width: 760px) {
+  .bar {
+    right: 12px;
   }
-  .status {
-    display: none;
+  .side {
+    top: auto;
+    bottom: 12px;
+    left: 12px;
+    width: auto;
+    max-height: 38vh;
   }
 }

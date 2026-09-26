@@ -3,18 +3,42 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Virtual World Editor</title>
+    <title>NeuroRacer Track Editor</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b0d11'/%3E%3Cpath d='M8 22c0-8 4-12 8-12s8 4 8 12' fill='none' stroke='%23ffcf4a' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E"
+    />
   </head>
   <body>
     <canvas id="view"></canvas>
     <div class="bar">
-      <div class="group" id="tools"></div>
-      <div class="group" id="actions"></div>
-      <div class="group right">
-        <a class="btn primary" href="./sim.html" id="drive">Drive &rarr;</a>
+      <div class="group">
+        <button id="new" title="Start from the template">New</button>
+        <button id="open" title="Open a .track.json file">Open</button>
+        <button id="export" title="Download for NeuroRacer">Export</button>
+      </div>
+      <div class="group">
+        <button id="undo" title="Ctrl+Z">Undo</button>
+        <button id="redo" title="Ctrl+Y">Redo</button>
+        <button id="reverse" title="Drive the other way (R)">Reverse</button>
+        <button id="fit" title="Fit arena to screen (F)">Fit</button>
       </div>
     </div>
-    <div class="status" id="status"></div>
+    <aside class="side" id="side">
+      <label class="name">Track name <input id="name" spellcheck="false" maxlength="40" /></label>
+      <p class="note" id="imported" hidden>
+        Imported centerline, shown exactly. Editing a handle switches to the fitted spline, which can
+        measure corners differently.
+      </p>
+      <h3>Checks</h3>
+      <ul id="checks"></ul>
+      <h3>Measurements</h3>
+      <dl id="metrics"></dl>
+      <p class="hint">
+        Click the track to add a handle, drag to move, right-click to delete. <kbd>S</kbd> on a handle makes it
+        the start. Shift-drag or middle-drag to pan, scroll to zoom.
+      </p>
+    </aside>
     <script type="module" src="/src/editor/main.ts"></script>
   </body>
 </html>

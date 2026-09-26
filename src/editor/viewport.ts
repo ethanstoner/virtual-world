@@ -1,6 +1,4 @@
-import { Point, type Vec, add, scale, subtract } from "../math/point";
-
-export type ViewState = { zoom: number; offset: [number, number] };
+import { Point, type Vec, add, subtract } from "../math/point";
 
 /**
  * Maps screen pixels to world units. `offset` is the world point shown at the canvas centre,
@@ -26,11 +24,6 @@ export class Viewport {
     return new Point(this.canvas.width / 2, this.canvas.height / 2);
   }
 
-  /** World point at the middle of the screen: where the fake-3D camera sits. */
-  get viewPoint(): Point {
-    return scale(this.offset, -1);
-  }
-
   get isPanning(): boolean {
     return this.drag !== null;
   }
@@ -38,11 +31,6 @@ export class Viewport {
   screenToWorld(sx: number, sy: number): Point {
     const c = this.center;
     return new Point((sx - c.x) / this.zoom - this.offset.x, (sy - c.y) / this.zoom - this.offset.y);
-  }
-
-  worldToScreen(p: Vec): Point {
-    const c = this.center;
-    return new Point((p.x + this.offset.x) * this.zoom + c.x, (p.y + this.offset.y) * this.zoom + c.y);
   }
 
   mouse(e: MouseEvent): Point {
@@ -53,7 +41,7 @@ export class Viewport {
   }
 
   /** Clears and applies the world transform. */
-  begin(ctx: CanvasRenderingContext2D, background = "#2a5d34"): void {
+  begin(ctx: CanvasRenderingContext2D, background = "#0b0d11"): void {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = background;
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -72,15 +60,6 @@ export class Viewport {
     this.lookAt(new Point((minX + maxX) / 2, (minY + maxY) / 2));
   }
 
-  state(): ViewState {
-    return { zoom: this.zoom, offset: [this.offset.x, this.offset.y] };
-  }
-
-  restore(s: ViewState): void {
-    this.zoom = s.zoom;
-    this.offset = new Point(s.offset[0], s.offset[1]);
-  }
-
   private onWheel(e: WheelEvent) {
     e.preventDefault();
     const before = this.mouse(e);
@@ -96,7 +75,7 @@ export class Viewport {
     if (!panButton) return;
     e.preventDefault();
     e.stopImmediatePropagation();
-    this.drag = { start: new Point(e.clientX, e.clientY), startOffset: this.offset.clone() };
+    this.drag = { start: new Point(e.clientX, e.clientY), startOffset: new Point(this.offset.x, this.offset.y) };
   }
 
   private onMove(e: MouseEvent) {
