@@ -15,6 +15,11 @@ export class Graph {
   /** Bumped on every mutation so derived geometry knows when to regenerate. */
   version = 0;
 
+  /** Call after moving a point in place. */
+  touch(): void {
+    this.version++;
+  }
+
   containsPoint(p: Point): boolean {
     return this.points.some((q) => q.equals(p));
   }
