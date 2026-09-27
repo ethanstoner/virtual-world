@@ -34,10 +34,29 @@ export class Viewport {
   }
 
   mouse(e: MouseEvent): Point {
+    return this.atClient(e.clientX, e.clientY);
+  }
+
+  /** World point under a client (CSS pixel) position. */
+  atClient(clientX: number, clientY: number): Point {
     const r = this.canvas.getBoundingClientRect();
-    const sx = ((e.clientX - r.left) * this.canvas.width) / r.width;
-    const sy = ((e.clientY - r.top) * this.canvas.height) / r.height;
+    const sx = ((clientX - r.left) * this.canvas.width) / r.width;
+    const sy = ((clientY - r.top) * this.canvas.height) / r.height;
     return this.screenToWorld(sx, sy);
+  }
+
+  /** Move the view by a drag of (dx, dy) client pixels. */
+  panByClient(dx: number, dy: number): void {
+    const r = this.canvas.getBoundingClientRect();
+    const k = this.canvas.width / r.width / this.zoom;
+    this.offset = new Point(this.offset.x + dx * k, this.offset.y + dy * k);
+  }
+
+  /** Zoom by `factor`, keeping the world point under the client position fixed. */
+  zoomAt(clientX: number, clientY: number, factor: number): void {
+    const before = this.atClient(clientX, clientY);
+    this.zoom = clamp(this.zoom * factor, this.minZoom, this.maxZoom);
+    this.offset = add(this.offset, subtract(this.atClient(clientX, clientY), before));
   }
 
   /** Clears and applies the world transform. */
@@ -62,12 +81,7 @@ export class Viewport {
 
   private onWheel(e: WheelEvent) {
     e.preventDefault();
-    const before = this.mouse(e);
-    const factor = Math.exp(-Math.sign(e.deltaY) * 0.12);
-    this.zoom = clamp(this.zoom * factor, this.minZoom, this.maxZoom);
-    const after = this.mouse(e);
-    // keep the world point under the cursor fixed
-    this.offset = add(this.offset, subtract(after, before));
+    this.zoomAt(e.clientX, e.clientY, Math.exp(-Math.sign(e.deltaY) * 0.12));
   }
 
   private onDown(e: MouseEvent) {

@@ -6,7 +6,7 @@ editor measures it the way NeuroRacer's trainer will. It rejects shapes the
 trainer can't use and exports JSON that NeuroRacer loads anywhere a track name
 goes.
 
-![The editor with a valid track](docs/img/editor.png)
+![Dragging a handle: the loop pinches, two checks fail and Export locks, then it recovers](docs/img/demo.gif)
 
 ### Highlights
 
@@ -15,8 +15,12 @@ goes.
   file exported from this editor's UI, all five measurements agree with numpy to
   within 0.01. On a test circle the corner radius agrees to 11 significant
   figures.
-- **Re-measures on every drag frame**: 3.1 to 3.8ms per full analysis of a
-  560 to 640 sample lap, including an O(n²) closest-approach search.
+- **Re-measures on every drag frame**: 2.5 to 3.8ms per full analysis of a
+  560 to 640 sample lap, including an O(n²) closest-approach search (range
+  across two measurement runs).
+- **Works with a mouse or a phone.** Tap to add, drag to move, long-press to
+  delete, pinch to zoom. 14 browser tests drive both, with touch sent as real
+  touch input rather than simulated mouse events.
 - **Built as tooling for the finding that mattered.** Together with NeuroRacer's
   seeded track generator, the shared file format put 100 unseen tracks in front
   of NeuroRacer's champions. That showed its best "generalising" champion laps
@@ -24,7 +28,8 @@ goes.
   own training track reversed
   ([devlog 09](https://github.com/ethanstoner/neuro-racer/blob/main/docs/devlog/09-the-generated-test.md)).
 
-**TypeScript · Canvas 2D · Vite · Vitest**, with no runtime dependencies.
+**TypeScript · Canvas 2D · Vite · Vitest · Playwright**, with no runtime
+dependencies.
 
 ## What it checks
 
@@ -59,8 +64,9 @@ handles ──centripetal Catmull-Rom──▶ centerline (2px samples, rounded 
 ```
 
 `src/track/` is pure TypeScript with no DOM, so all of the measuring is unit
-tested. `src/editor/` is the canvas UI on top: viewport, handles, undo history.
-The whole analysis reruns on every change, 3.1 to 3.8ms per run.
+tested. `src/editor/` is the canvas UI on top: viewport, mouse and touch input, undo
+history.
+The whole analysis reruns on every change, 2.5 to 3.8ms per run.
 
 ## Engineering highlights
 
@@ -97,14 +103,15 @@ npm run dev          # http://localhost:5173
 Click the track to add a handle, drag to move it, right-click or Delete to
 remove it. `S` on a handle makes it the start line, `R` reverses the driving
 direction, `F` fits the arena to the screen. Shift-drag or middle-drag pans,
-the scroll wheel zooms. The editor is mouse-driven; touch input isn't
-implemented. Work in progress is kept in `localStorage`.
+the scroll wheel zooms. On a touchscreen: tap to add, drag to move, long-press
+to delete, drag empty space to pan, pinch to zoom. Work in progress is kept in
+`localStorage`.
 
-Export writes `<name>.track.json`. In NeuroRacer:
+Export writes `<name>.track.json`. In NeuroRacer, from its repo root:
 
 ```bash
-python train.py --track my-track.track.json --generations 200
-python main.py --track my-track.track.json
+python -m scripts.train --track my-track.track.json --generations 200
+python -m scripts.app --track my-track.track.json
 ```
 
 ## File format
@@ -129,13 +136,17 @@ refuses a file that breaks a rule, naming the rule.
 ## Testing
 
 ```bash
-npm test             # 16 tests
+npm test             # 16 unit tests
+npm run test:e2e     # 14 browser tests (Playwright)
 npm run build        # type-check + production build
 ```
 
-These cover the metric ports (against numpy values), the spline passing through
-every handle, each check failing on a shape built to fail it, file round-trips,
-exact imports, and undo/redo semantics.
+The unit tests cover the metric ports (against numpy values), the spline
+passing through every handle, each check failing on a shape built to fail it,
+file round-trips, exact imports, and undo/redo. The browser tests drive the real
+app: mouse editing, undo and redo, wheel zoom and pan, export, opening a
+NeuroRacer file, reload persistence, and every touch gesture on an emulated
+Pixel 7. All three run in CI.
 
 ## Project structure
 
@@ -143,7 +154,7 @@ exact imports, and undo/redo semantics.
 src/track/    measurement ports, spline, track model and file format (no DOM)
 src/editor/   canvas UI: viewport, handles, undo history, styles
 src/math/     2D vector helpers
-tests/        Vitest suite, with fixtures/ holding a track written by NeuroRacer
+tests/        Vitest unit tests; e2e/ Playwright browser tests; fixtures/ a NeuroRacer-written track
 docs/img/     README screenshots
 ```
 
@@ -161,6 +172,15 @@ docs/img/     README screenshots
   viewport carried over, and it was refocused as a track editor because tooling
   that feeds a measured experiment is worth more than one more copy of a widely
   built tutorial.
+
+## Limitations
+
+- There's no hosted demo yet. It runs locally with `npm run dev`.
+- Browser tests run in Chromium only (desktop, plus Pixel 7 emulation).
+  Safari and Firefox haven't been tested.
+- The 40px minimum corner is conservative: NeuroRacer champions lap tighter
+  centerline corners by taking a wider line. It's kept because NeuroRacer's
+  generated test set depends on it.
 
 ## License
 

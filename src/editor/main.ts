@@ -50,27 +50,18 @@ function reach() {
   return 16 / viewport.zoom;
 }
 
-canvas.addEventListener("mousedown", (e) => {
-  const at = viewport.mouse(e);
-  if (e.button === 2) {
-    if (hovered && track.controls.length > 4) {
-      const p = hovered;
-      history.record(() => {
-        track.detach();
-        track.controls = track.controls.filter((q) => q !== p);
-      });
-      hovered = null;
-      changed();
-    }
-    return;
-  }
-  if (e.button !== 0) return;
-  history.begin();
-  if (hovered) {
-    dragging = hovered;
-    return;
-  }
-  // insert into the span whose stretch of curve passes closest to the click
+function deleteHandle(p: Point) {
+  if (track.controls.length <= 4) return;
+  history.record(() => {
+    track.detach();
+    track.controls = track.controls.filter((q) => q !== p);
+  });
+  if (hovered === p) hovered = null;
+  changed();
+}
+
+/** Insert a handle into the span whose stretch of curve passes closest to `at`. */
+function insertHandle(at: Point): Point {
   const starts = spanStarts(track.controls, 2);
   let best = 0, bestD = Infinity;
   centerline.forEach((p, i) => {
@@ -82,11 +73,26 @@ canvas.addEventListener("mousedown", (e) => {
   });
   let span = 0;
   while (span + 1 < starts.length && starts[span + 1] <= best) span++;
-  const p = new Point(at.x, at.y);
+  const p = new Point(Math.round(at.x), Math.round(at.y));
   track.detach();
   track.controls.splice(span + 1, 0, p);
-  hovered = dragging = p;
   changed();
+  return p;
+}
+
+canvas.addEventListener("mousedown", (e) => {
+  const at = viewport.mouse(e);
+  if (e.button === 2) {
+    if (hovered) deleteHandle(hovered);
+    return;
+  }
+  if (e.button !== 0) return;
+  history.begin();
+  if (hovered) {
+    dragging = hovered;
+    return;
+  }
+  hovered = dragging = insertHandle(at);
 });
 
 window.addEventListener("mousemove", (e) => {
@@ -121,16 +127,116 @@ window.addEventListener("keydown", (e) => {
   } else if (k === "r") reverse();
   else if (k === "f") fit();
   else if (k === "s" && hovered) setStart(hovered);
-  else if ((k === "delete" || k === "backspace") && hovered && track.controls.length > 4) {
-    const p = hovered;
-    history.record(() => {
-      track.detach();
-      track.controls = track.controls.filter((q) => q !== p);
-    });
-    hovered = null;
+  else if ((k === "delete" || k === "backspace") && hovered) deleteHandle(hovered);
+});
+
+// ---------- touch ----------
+// Tap the track to add a handle, drag a handle to move it, long-press a handle to delete
+// it, drag empty space to pan, pinch to zoom. Mouse input above is untouched: these
+// handlers only act on touch pointers, and cancel the browser's emulated mouse events.
+
+const touches = new Map<number, { x: number; y: number }>();
+let touchGesture:
+  | { kind: "pending"; id: number; x0: number; y0: number; handle: Point | null; timer: number }
+  | { kind: "drag"; id: number; handle: Point }
+  | { kind: "pan"; id: number }
+  | { kind: "pinch"; dist: number }
+  | null = null;
+const TAP_SLOP = 10, LONG_PRESS_MS = 550;
+
+function pinchSpan() {
+  const [a, b] = [...touches.values()];
+  return { dist: Math.hypot(a.x - b.x, a.y - b.y), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
+}
+
+function endTouchDrag() {
+  if (touchGesture?.kind === "drag") {
+    dragging = null;
+    history.end();
     changed();
   }
+  if (touchGesture?.kind === "pending") clearTimeout(touchGesture.timer);
+}
+
+canvas.addEventListener("pointerdown", (e) => {
+  if (e.pointerType !== "touch") return;
+  e.preventDefault();
+  touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (touches.size === 2) {
+    endTouchDrag();
+    touchGesture = { kind: "pinch", dist: pinchSpan().dist };
+    return;
+  }
+  if (touches.size > 2) return;
+  const handle = getNearestPoint(viewport.atClient(e.clientX, e.clientY), track.controls, 28 / viewport.zoom);
+  hovered = handle;
+  const timer = window.setTimeout(() => {
+    if (touchGesture?.kind === "pending" && touchGesture.handle) {
+      deleteHandle(touchGesture.handle);
+      touchGesture = null;
+    }
+  }, LONG_PRESS_MS);
+  touchGesture = { kind: "pending", id: e.pointerId, x0: e.clientX, y0: e.clientY, handle, timer };
 });
+
+canvas.addEventListener("pointermove", (e) => {
+  if (e.pointerType !== "touch" || !touches.has(e.pointerId)) return;
+  const prev = touches.get(e.pointerId)!;
+  touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  const g = touchGesture;
+  if (!g) return;
+  if (g.kind === "pinch" && touches.size === 2) {
+    const { dist, mx, my } = pinchSpan();
+    viewport.panByClient((e.clientX - prev.x) / 2, (e.clientY - prev.y) / 2);
+    if (g.dist > 0) viewport.zoomAt(mx, my, dist / g.dist);
+    g.dist = dist;
+    return;
+  }
+  if (g.kind === "pending" && g.id === e.pointerId) {
+    if (Math.hypot(e.clientX - g.x0, e.clientY - g.y0) < TAP_SLOP) return;
+    clearTimeout(g.timer);
+    if (g.handle) {
+      history.begin();
+      dragging = g.handle;
+      touchGesture = { kind: "drag", id: g.id, handle: g.handle };
+    } else {
+      touchGesture = { kind: "pan", id: g.id };
+    }
+  }
+  const cur = touchGesture;
+  if (cur?.kind === "drag" && cur.id === e.pointerId) {
+    const at = viewport.atClient(e.clientX, e.clientY);
+    track.detach();
+    cur.handle.x = Math.round(at.x);
+    cur.handle.y = Math.round(at.y);
+    changed();
+  } else if (cur?.kind === "pan" && cur.id === e.pointerId) {
+    viewport.panByClient(e.clientX - prev.x, e.clientY - prev.y);
+  }
+});
+
+function touchEnd(e: PointerEvent) {
+  if (e.pointerType !== "touch" || !touches.has(e.pointerId)) return;
+  touches.delete(e.pointerId);
+  const g = touchGesture;
+  if (g?.kind === "pending" && g.id === e.pointerId) {
+    clearTimeout(g.timer);
+    // a tap on open track adds a handle; a tap on a handle just selects it
+    if (!g.handle && e.type === "pointerup") {
+      history.record(() => (hovered = insertHandle(viewport.atClient(g.x0, g.y0))));
+    }
+    touchGesture = null;
+  } else if (g?.kind === "drag" && g.id === e.pointerId) {
+    endTouchDrag();
+    touchGesture = null;
+  } else if (g?.kind === "pinch" && touches.size < 2) {
+    touchGesture = null;
+  } else if (g?.kind === "pan" && g.id === e.pointerId) {
+    touchGesture = null;
+  }
+}
+canvas.addEventListener("pointerup", touchEnd);
+canvas.addEventListener("pointercancel", touchEnd);
 
 function reverse() {
   history.record(() => {
@@ -374,7 +480,12 @@ function drawApproach(ctx: Ctx, failing: boolean) {
   ctx.setLineDash([4 / viewport.zoom, 4 / viewport.zoom]);
   ctx.stroke();
   ctx.setLineDash([]);
-  label(ctx, scale(add(a, b), 0.5), `gap ${analysis.metrics.self_approach.toFixed(0)}px`, failing ? "#f87171" : "#7dd3fc", true);
+  // when the gap sits beside the tightest corner, stack its label under the corner's
+  // instead of letting the two overlap
+  const mid = scale(add(a, b), 0.5);
+  const corner = analysis.resampled[analysis.tightestIndex];
+  const anchor = distance(mid, corner) * viewport.zoom < 60 ? corner : mid;
+  label(ctx, anchor, `gap ${analysis.metrics.self_approach.toFixed(0)}px`, failing ? "#f87171" : "#7dd3fc", true);
 }
 
 function label(ctx: Ctx, at: { x: number; y: number }, text: string, color: string, below = false) {
@@ -423,4 +534,4 @@ function frame() {
 requestAnimationFrame(frame);
 
 // hooks for automated checks (Playwright): read state without scraping the canvas
-Object.assign(window, { __editor: { get track() { return track; }, get analysis() { return analysis; }, history, openText } });
+Object.assign(window, { __editor: { get track() { return track; }, get analysis() { return analysis; }, history, openText, viewport } });

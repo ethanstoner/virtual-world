@@ -30,6 +30,20 @@ canvas#view {
   height: 100vh;
   display: block;
   cursor: crosshair;
+  touch-action: none;
+}
+
+.hint .touch {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .hint .mouse {
+    display: none;
+  }
+  .hint .touch {
+    display: inline;
+  }
 }
 
 .bar {
