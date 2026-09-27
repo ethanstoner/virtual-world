@@ -1,10 +1,12 @@
 # virtual-world
 
-A track editor for [NeuroRacer](https://github.com/ethanstoner/neuro-racer), my
-neuroevolution racing project. You draw a closed track in the browser, and the
-editor measures it the way NeuroRacer's trainer will. It rejects shapes the
-trainer can't use and exports JSON that NeuroRacer loads anywhere a track name
-goes.
+> Part of **[NeuroRacer](https://github.com/ethanstoner/neuro-racer)**, the
+> parent project. This is its track editor; the research and results live there.
+
+A browser track editor for NeuroRacer, my neuroevolution racing project. You
+draw a closed track, the editor measures it the way NeuroRacer's trainer will,
+rejects shapes the trainer can't use, and exports JSON that NeuroRacer loads
+anywhere a track name goes.
 
 ![Dragging a handle: the loop pinches, two checks fail and Export locks, then it recovers](docs/img/demo.gif)
 
@@ -98,6 +100,7 @@ The whole analysis reruns on every change, 2.5 to 3.8ms per run.
 ```bash
 npm install
 npm run dev          # http://localhost:5173
+npm run build        # static site in dist/, relative paths, works from any subpath
 ```
 
 Click the track to add a handle, drag to move it, right-click or Delete to
@@ -175,7 +178,8 @@ docs/img/     README screenshots
 
 ## Limitations
 
-- There's no hosted demo yet. It runs locally with `npm run dev`.
+- There's no hosted demo yet. `npm run build` produces a static site that has
+  been checked served from a subpath, so any static host will do.
 - Browser tests run in Chromium only (desktop, plus Pixel 7 emulation).
   Safari and Firefox haven't been tested.
 - The 40px minimum corner is conservative: NeuroRacer champions lap tighter
