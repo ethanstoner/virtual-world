@@ -6,7 +6,7 @@ editor measures it the way NeuroRacer's trainer will. It rejects shapes the
 trainer can't use and exports JSON that NeuroRacer loads anywhere a track name
 goes.
 
-![The editor with a valid track](docs/editor.png)
+![The editor with a valid track](docs/img/editor.png)
 
 ### Highlights
 
@@ -39,11 +39,28 @@ while any of the first three fails:
 | Measurable corners | tightest radius ≥ 40px | below that the centerline radius stops describing the corner a car drives: NeuroRacer's champions lap 12px centerline corners on a wider line |
 | Turns both ways (warning) | some of the lap curves against the grain | an all-one-way loop can be driven by a fixed steering bias |
 
-![A pinched track failing two checks](docs/editor-failing.png)
+![A pinched track failing two checks](docs/img/editor-failing.png)
 
-The dashed circle is the osculating circle at the tightest point: the corner the
-car actually has to get round. The dashed line joins the two parts of the lap
-that come closest to each other.
+The dashed circle is the osculating circle at the centerline's tightest point.
+The dashed line joins the two parts of the lap that come closest to each other.
+
+## Architecture
+
+```
+handles ──centripetal Catmull-Rom──▶ centerline (2px samples, rounded to 0.01px)
+                                          │
+                                          ▼ resample to 4px, exactly as NeuroRacer does
+                        tightest radius · closest approach · reverse curvature · arena margin
+                                          │
+                     checks ──▶ side panel, canvas overlays, Export enabled or blocked
+                                          │
+                                          ▼
+                              <name>.track.json ──▶ NeuroRacer --track
+```
+
+`src/track/` is pure TypeScript with no DOM, so all of the measuring is unit
+tested. `src/editor/` is the canvas UI on top: viewport, handles, undo history.
+The whole analysis reruns on every change, 3.1 to 3.8ms per run.
 
 ## Engineering highlights
 
@@ -123,20 +140,27 @@ exact imports, and undo/redo semantics.
 ## Project structure
 
 ```
-src/track/metrics.ts   ports of NeuroRacer's measurements
-src/track/spline.ts    closed centripetal Catmull-Rom
-src/track/track.ts     track model, checks, file format
-src/editor/            canvas UI, viewport, undo history
-tests/fixtures/        a track written by NeuroRacer
+src/track/    measurement ports, spline, track model and file format (no DOM)
+src/editor/   canvas UI: viewport, handles, undo history, styles
+src/math/     2D vector helpers
+tests/        Vitest suite, with fixtures/ holding a track written by NeuroRacer
+docs/img/     README screenshots
 ```
 
-## Background
+## What I learned
 
-This started as a build of Radu Mariescu-Istodor's "Virtual World"
-course (a road-network world editor for self-driving cars). The pan/zoom
-viewport carried over from that build, and the road-network code was replaced.
-It was refocused as a track editor for NeuroRacer because tooling that feeds a measured experiment is worth more
-than a copy of a widely built tutorial.
+- **A port is only trustworthy if it's tested against the original on real
+  data.** Matching numpy meant copying its quirks (one-sided gradients at the
+  array ends), and the parity tests found a bug on the Python side, not this
+  one.
+- **Don't let a display convenience change the numbers.** Fitted handles made
+  imported tracks editable, but they misreported a 121px corner as 106px, so
+  imports stay exact until edited.
+- **Tooling beats a tutorial copy.** This started as a build of Radu
+  Mariescu-Istodor's "Virtual World" course, a road-network editor. Its pan/zoom
+  viewport carried over, and it was refocused as a track editor because tooling
+  that feeds a measured experiment is worth more than one more copy of a widely
+  built tutorial.
 
 ## License
 

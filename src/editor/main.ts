@@ -1,6 +1,6 @@
-import "../ui/style.css";
+import "./style.css";
 import { Point, add, distance, getNearestPoint, perpendicular, scale, subtract, normalize } from "../math/point";
-import { type Ctx, drawPoint, tracePath } from "../render/draw";
+import { type Ctx, drawPoint, tracePath } from "./draw";
 import { gradient } from "../track/metrics";
 import { spanStarts } from "../track/spline";
 import { ARENA, type Analysis, type Check, Track } from "../track/track";
@@ -342,7 +342,7 @@ function drawTrack(ctx: Ctx) {
   drawApproach(ctx, failing.has("overlap"));
 }
 
-/** The osculating circle at the tightest point: the corner the car has to get round. */
+/** The osculating circle at the centerline's tightest point. */
 function drawTightest(ctx: Ctx, failing: boolean) {
   const c = analysis.resampled;
   const i = analysis.tightestIndex;
