@@ -1,5 +1,7 @@
 # virtual-world
 
+**Live demo: https://neuroracer-editor.pages.dev**
+
 > Part of **[NeuroRacer](https://github.com/ethanstoner/neuro-racer)**, the
 > parent project. This is its track editor; the research and results live there.
 
@@ -98,10 +100,14 @@ The whole analysis reruns on every change, 2.5 to 3.8ms per run.
 ## Getting started
 
 ```bash
-npm install
+npm ci
 npm run dev          # http://localhost:5173
 npm run build        # static site in dist/, relative paths, works from any subpath
 ```
+
+The live demo is `dist/` deployed to Cloudflare Pages (build command
+`npm run build`, output directory `dist`, Node 22 from `.node-version`). Any
+static host works the same way; there is no server code.
 
 Click the track to add a handle, drag to move it, right-click or Delete to
 remove it. `S` on a handle makes it the start line, `R` reverses the driving
@@ -140,6 +146,7 @@ refuses a file that breaks a rule, naming the rule.
 
 ```bash
 npm test             # 16 unit tests
+npx playwright install chromium   # once, before the first browser run
 npm run test:e2e     # 14 browser tests (Playwright)
 npm run build        # type-check + production build
 ```
@@ -178,14 +185,20 @@ docs/img/     README screenshots
 
 ## Limitations
 
-- There's no hosted demo yet. `npm run build` produces a static site that has
-  been checked served from a subpath, so any static host will do.
 - Browser tests run in Chromium only (desktop, plus Pixel 7 emulation).
   Safari and Firefox haven't been tested.
 - The 40px minimum corner is conservative: NeuroRacer champions lap tighter
   centerline corners by taking a wider line. It's kept because NeuroRacer's
   generated test set depends on it.
 
+## Credits
+
+The pan/zoom viewport (`src/editor/viewport.ts`) and the early history of this
+repo come from Radu Mariescu-Istodor's
+[Virtual World](https://github.com/gniziemazity/virtual-world) course, rewritten
+in TypeScript. That code is MIT licensed, Copyright (c) 2023 Radu
+Mariescu-Istodor.
+
 ## License
 
-MIT
+MIT, see [LICENSE](LICENSE).
