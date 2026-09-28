@@ -1,6 +1,6 @@
 # virtual-world
 
-**Live demo: https://neuroracer-editor.pages.dev**
+**Live demo: https://neuroracer.ethanstoner.dev**
 
 > Part of **[NeuroRacer](https://github.com/ethanstoner/neuro-racer)**, the
 > parent project. This is its track editor; the research and results live there.
