@@ -533,5 +533,7 @@ function frame() {
 }
 requestAnimationFrame(frame);
 
-// hooks for automated checks (Playwright): read state without scraping the canvas
-Object.assign(window, { __editor: { get track() { return track; }, get analysis() { return analysis; }, history, openText, viewport } });
+// hooks for automated checks (Playwright, run against the dev server); stripped from production builds
+if (import.meta.env.DEV) {
+  Object.assign(window, { __editor: { get track() { return track; }, get analysis() { return analysis; }, history, openText, viewport } });
+}
